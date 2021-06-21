@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -247,8 +248,22 @@ func (this *TemplateController) JsonError(message interface{}, data ...interface
 
 // get client ip
 func (this *TemplateController) GetClientIp() string {
-	s := strings.Split(this.Ctx.Request.RemoteAddr, ":")
-	return s[0]
+	//s := strings.Split(this.Ctx.Request.RemoteAddr, ":")
+	//return s[0]
+	r := this.Ctx.Request
+	xForwardedFor := r.Header.Get("X-Forwarded-For")
+	ip := strings.TrimSpace(strings.Split(xForwardedFor, ",")[0])
+	if ip != "" {
+		return ip
+	}
+	ip = strings.TrimSpace(r.Header.Get("X-Real-Ip"))
+	if ip != "" {
+		return ip
+	}
+	if ip, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr)); err == nil {
+		return ip
+	}
+	return ""
 }
 
 // paginator
